@@ -1,0 +1,373 @@
+                                      1 ;--------------------------------------------------------
+                                      2 ; File Created by SDCC : free open source ISO C Compiler 
+                                      3 ; Version 4.4.0 #14620 (Linux)
+                                      4 ;--------------------------------------------------------
+                                      5 	.module main
+                                      6 	.optsdcc -mstm8
+                                      7 	
+                                      8 ;--------------------------------------------------------
+                                      9 ; Public variables in this module
+                                     10 ;--------------------------------------------------------
+                                     11 	.globl _main
+                                     12 	.globl _milis
+                                     13 	.globl _init_milis
+                                     14 	.globl _GPIO_ReadInputPin
+                                     15 	.globl _GPIO_WriteLow
+                                     16 	.globl _GPIO_WriteHigh
+                                     17 	.globl _GPIO_Init
+                                     18 	.globl _CLK_HSIPrescalerConfig
+                                     19 	.globl _init
+                                     20 ;--------------------------------------------------------
+                                     21 ; ram data
+                                     22 ;--------------------------------------------------------
+                                     23 	.area DATA
+                                     24 ;--------------------------------------------------------
+                                     25 ; ram data
+                                     26 ;--------------------------------------------------------
+                                     27 	.area INITIALIZED
+                                     28 ;--------------------------------------------------------
+                                     29 ; Stack segment in internal ram
+                                     30 ;--------------------------------------------------------
+                                     31 	.area SSEG
+      000000                         32 __start__stack:
+      000000                         33 	.ds	1
+                                     34 
+                                     35 ;--------------------------------------------------------
+                                     36 ; absolute external ram data
+                                     37 ;--------------------------------------------------------
+                                     38 	.area DABS (ABS)
+                                     39 
+                                     40 ; default segment ordering for linker
+                                     41 	.area HOME
+                                     42 	.area GSINIT
+                                     43 	.area GSFINAL
+                                     44 	.area CONST
+                                     45 	.area INITIALIZER
+                                     46 	.area CODE
+                                     47 
+                                     48 ;--------------------------------------------------------
+                                     49 ; interrupt vector
+                                     50 ;--------------------------------------------------------
+                                     51 	.area HOME
+      000000                         52 __interrupt_vect:
+      000000 82v00u00u00             53 	int s_GSINIT ; reset
+      000004 82v00u00u00             54 	int _TRAP_IRQHandler ; trap
+      000008 82v00u00u00             55 	int _TLI_IRQHandler ; int0
+      00000C 82v00u00u00             56 	int _AWU_IRQHandler ; int1
+      000010 82v00u00u00             57 	int _CLK_IRQHandler ; int2
+      000014 82v00u00u00             58 	int _EXTI_PORTA_IRQHandler ; int3
+      000018 82v00u00u00             59 	int _EXTI_PORTB_IRQHandler ; int4
+      00001C 82v00u00u00             60 	int _EXTI_PORTC_IRQHandler ; int5
+      000020 82v00u00u00             61 	int _EXTI_PORTD_IRQHandler ; int6
+      000024 82v00u00u00             62 	int _EXTI_PORTE_IRQHandler ; int7
+      000028 82v00u00u00             63 	int _CAN_RX_IRQHandler ; int8
+      00002C 82v00u00u00             64 	int _CAN_TX_IRQHandler ; int9
+      000030 82v00u00u00             65 	int _SPI_IRQHandler ; int10
+      000034 82v00u00u00             66 	int _TIM1_UPD_OVF_TRG_BRK_IRQHandler ; int11
+      000038 82v00u00u00             67 	int _TIM1_CAP_COM_IRQHandler ; int12
+      00003C 82v00u00u00             68 	int _TIM2_UPD_OVF_BRK_IRQHandler ; int13
+      000040 82v00u00u00             69 	int _TIM2_CAP_COM_IRQHandler ; int14
+      000044 82v00u00u00             70 	int _TIM3_UPD_OVF_BRK_IRQHandler ; int15
+      000048 82v00u00u00             71 	int _TIM3_CAP_COM_IRQHandler ; int16
+      00004C 82v00u00u00             72 	int _UART1_TX_IRQHandler ; int17
+      000050 82v00u00u00             73 	int _UART1_RX_IRQHandler ; int18
+      000054 82v00u00u00             74 	int _I2C_IRQHandler ; int19
+      000058 82v00u00u00             75 	int _UART3_TX_IRQHandler ; int20
+      00005C 82v00u00u00             76 	int _UART3_RX_IRQHandler ; int21
+      000060 82v00u00u00             77 	int _ADC2_IRQHandler ; int22
+      000064 82v00u00u00             78 	int _TIM4_UPD_OVF_IRQHandler ; int23
+      000068 82v00u00u00             79 	int _EEPROM_EEC_IRQHandler ; int24
+                                     80 ;--------------------------------------------------------
+                                     81 ; global & static initialisations
+                                     82 ;--------------------------------------------------------
+                                     83 	.area HOME
+                                     84 	.area GSINIT
+                                     85 	.area GSFINAL
+                                     86 	.area GSINIT
+      000000 CDr00r00         [ 4]   87 	call	___sdcc_external_startup
+      000003 4D               [ 1]   88 	tnz	a
+      000004 27 03            [ 1]   89 	jreq	__sdcc_init_data
+      000006 CCr00r6C         [ 2]   90 	jp	__sdcc_program_startup
+      000009                         91 __sdcc_init_data:
+                                     92 ; stm8_genXINIT() start
+      000009 AEr00r00         [ 2]   93 	ldw x, #l_DATA
+      00000C 27 07            [ 1]   94 	jreq	00002$
+      00000E                         95 00001$:
+      00000E 72 4FuFFuFF      [ 1]   96 	clr (s_DATA - 1, x)
+      000012 5A               [ 2]   97 	decw x
+      000013 26 F9            [ 1]   98 	jrne	00001$
+      000015                         99 00002$:
+      000015 AEr00r00         [ 2]  100 	ldw	x, #l_INITIALIZER
+      000018 27 09            [ 1]  101 	jreq	00004$
+      00001A                        102 00003$:
+      00001A D6uFFuFF         [ 1]  103 	ld	a, (s_INITIALIZER - 1, x)
+      00001D D7uFFuFF         [ 1]  104 	ld	(s_INITIALIZED - 1, x), a
+      000020 5A               [ 2]  105 	decw	x
+      000021 26 F7            [ 1]  106 	jrne	00003$
+      000023                        107 00004$:
+                                    108 ; stm8_genXINIT() end
+                                    109 	.area GSFINAL
+      000000 CCr00r6C         [ 2]  110 	jp	__sdcc_program_startup
+                                    111 ;--------------------------------------------------------
+                                    112 ; Home
+                                    113 ;--------------------------------------------------------
+                                    114 	.area HOME
+                                    115 	.area HOME
+      00006C                        116 __sdcc_program_startup:
+      00006C CCr00r30         [ 2]  117 	jp	_main
+                                    118 ;	return from main will return to caller
+                                    119 ;--------------------------------------------------------
+                                    120 ; code
+                                    121 ;--------------------------------------------------------
+                                    122 	.area CODE
+                                    123 ;	./src/main.c: 6: void init(void) {
+                                    124 ; genLabel
+                                    125 ;	-----------------------------------------
+                                    126 ;	 function init
+                                    127 ;	-----------------------------------------
+                                    128 ;	Register assignment is optimal.
+                                    129 ;	Stack space usage: 0 bytes.
+      000000                        130 _init:
+                                    131 ;	./src/main.c: 7: CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV1); // Nastaví taktování MCU na 16 MHz 
+                                    132 ; genSend
+      000000 4F               [ 1]  133 	clr	a
+                                    134 ; genCall
+      000001 CDr00r00         [ 4]  135 	call	_CLK_HSIPrescalerConfig
+                                    136 ;	./src/main.c: 9: GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUT_PP_LOW_SLOW); // Inicializuje PB.0 jako výstup s nízkou hodnotou a nízkou rychlostí.
+                                    137 ; genIPush
+      000004 4B C0            [ 1]  138 	push	#0xc0
+                                    139 ; genSend
+      000006 A6 01            [ 1]  140 	ld	a, #0x01
+                                    141 ; genSend
+      000008 AE 50 05         [ 2]  142 	ldw	x, #0x5005
+                                    143 ; genCall
+      00000B CDr00r00         [ 4]  144 	call	_GPIO_Init
+                                    145 ;	./src/main.c: 10: GPIO_Init(GPIOB, GPIO_PIN_1, GPIO_MODE_OUT_PP_LOW_SLOW); // Inicializuje PB.1 ...
+                                    146 ; genIPush
+      00000E 4B C0            [ 1]  147 	push	#0xc0
+                                    148 ; genSend
+      000010 A6 02            [ 1]  149 	ld	a, #0x02
+                                    150 ; genSend
+      000012 AE 50 05         [ 2]  151 	ldw	x, #0x5005
+                                    152 ; genCall
+      000015 CDr00r00         [ 4]  153 	call	_GPIO_Init
+                                    154 ;	./src/main.c: 11: GPIO_Init(GPIOB, GPIO_PIN_2, GPIO_MODE_OUT_PP_LOW_SLOW); // Inicializuje PB.2 ...
+                                    155 ; genIPush
+      000018 4B C0            [ 1]  156 	push	#0xc0
+                                    157 ; genSend
+      00001A A6 04            [ 1]  158 	ld	a, #0x04
+                                    159 ; genSend
+      00001C AE 50 05         [ 2]  160 	ldw	x, #0x5005
+                                    161 ; genCall
+      00001F CDr00r00         [ 4]  162 	call	_GPIO_Init
+                                    163 ;	./src/main.c: 12: GPIO_Init(GPIOB, GPIO_PIN_3, GPIO_MODE_IN_PU_NO_IT);     // Inicializuje PB.3 jako vstup s interním pull-up rezistorem(kvuli tlačítku), bez přerušení.
+                                    164 ; genIPush
+      000022 4B 40            [ 1]  165 	push	#0x40
+                                    166 ; genSend
+      000024 A6 08            [ 1]  167 	ld	a, #0x08
+                                    168 ; genSend
+      000026 AE 50 05         [ 2]  169 	ldw	x, #0x5005
+                                    170 ; genCall
+      000029 CDr00r00         [ 4]  171 	call	_GPIO_Init
+                                    172 ;	./src/main.c: 14: init_milis(); 
+                                    173 ; genCall
+      00002C CCr00r00         [ 2]  174 	jp	_init_milis
+                                    175 ; genLabel
+      00002F                        176 00101$:
+                                    177 ;	./src/main.c: 15: }
+                                    178 ; genEndFunction
+      00002F 81               [ 4]  179 	ret
+                                    180 ;	./src/main.c: 17: int main(void) {
+                                    181 ; genLabel
+                                    182 ;	-----------------------------------------
+                                    183 ;	 function main
+                                    184 ;	-----------------------------------------
+                                    185 ;	Register assignment might be sub-optimal.
+                                    186 ;	Stack space usage: 11 bytes.
+      000030                        187 _main:
+      000030 52 0B            [ 2]  188 	sub	sp, #11
+                                    189 ;	./src/main.c: 18: uint8_t led_out = 1;   // uložení stavu LED (která LED má svítit).
+                                    190 ; genAssign
+      000032 A6 01            [ 1]  191 	ld	a, #0x01
+      000034 6B 01            [ 1]  192 	ld	(0x01, sp), a
+                                    193 ;	./src/main.c: 19: uint32_t time = 0;     // čas posledního stisknutí tlačítka 
+                                    194 ; genAssign
+      000036 5F               [ 1]  195 	clrw	x
+      000037 1F 04            [ 2]  196 	ldw	(0x04, sp), x
+      000039 1F 02            [ 2]  197 	ldw	(0x02, sp), x
+                                    198 ;	./src/main.c: 20: uint8_t lasttlac = 0;  // předchozí stav tlačítka pro detekci změny.
+                                    199 ; genAssign
+      00003B 0F 06            [ 1]  200 	clr	(0x06, sp)
+                                    201 ;	./src/main.c: 23: init(); // nastaví GPIO piny a časovač.
+                                    202 ; genCall
+      00003D CDr00r00         [ 4]  203 	call	_init
+                                    204 ;	./src/main.c: 24: GPIO_WriteHigh(GPIOB, GPIO_PIN_0);
+                                    205 ; genSend
+      000040 A6 01            [ 1]  206 	ld	a, #0x01
+                                    207 ; genSend
+      000042 AE 50 05         [ 2]  208 	ldw	x, #0x5005
+                                    209 ; genCall
+      000045 CDr00r00         [ 4]  210 	call	_GPIO_WriteHigh
+                                    211 ;	./src/main.c: 25: while (1) { 
+                                    212 ; genLabel
+      000048                        213 00114$:
+                                    214 ;	./src/main.c: 26: tlac = GPIO_ReadInputPin(GPIOB, GPIO_PIN_3); //stav tlačítka na pinu PB.3
+                                    215 ; genSend
+      000048 A6 08            [ 1]  216 	ld	a, #0x08
+                                    217 ; genSend
+      00004A AE 50 05         [ 2]  218 	ldw	x, #0x5005
+                                    219 ; genCall
+      00004D CDr00r00         [ 4]  220 	call	_GPIO_ReadInputPin
+                                    221 ; genCast
+                                    222 ; genAssign
+      000050 6B 07            [ 1]  223 	ld	(0x07, sp), a
+                                    224 ;	./src/main.c: 29: if ((milis() - time > 200) && !tlac && lasttlac) {
+                                    225 ; genCall
+      000052 CDr00r00         [ 4]  226 	call	_milis
+      000055 51               [ 1]  227 	exgw	x, y
+                                    228 ; genMinus
+      000056 72 F2 04         [ 2]  229 	subw	y, (0x04, sp)
+      000059 17 0A            [ 2]  230 	ldw	(0x0a, sp), y
+      00005B 9F               [ 1]  231 	ld	a, xl
+      00005C 12 03            [ 1]  232 	sbc	a, (0x03, sp)
+      00005E 6B 09            [ 1]  233 	ld	(0x09, sp), a
+      000060 9E               [ 1]  234 	ld	a, xh
+      000061 12 02            [ 1]  235 	sbc	a, (0x02, sp)
+      000063 6B 08            [ 1]  236 	ld	(0x08, sp), a
+                                    237 ; genCmp
+                                    238 ; genCmpTnz
+      000065 AE 00 C8         [ 2]  239 	ldw	x, #0x00c8
+      000068 13 0A            [ 2]  240 	cpw	x, (0x0a, sp)
+      00006A 4F               [ 1]  241 	clr	a
+      00006B 12 09            [ 1]  242 	sbc	a, (0x09, sp)
+      00006D 4F               [ 1]  243 	clr	a
+      00006E 12 08            [ 1]  244 	sbc	a, (0x08, sp)
+      000070 25 03            [ 1]  245 	jrc	00167$
+      000072 CCr00rE9         [ 2]  246 	jp	00110$
+      000075                        247 00167$:
+                                    248 ; skipping generated iCode
+                                    249 ; genIfx
+      000075 0D 07            [ 1]  250 	tnz	(0x07, sp)
+      000077 27 03            [ 1]  251 	jreq	00168$
+      000079 CCr00rE9         [ 2]  252 	jp	00110$
+      00007C                        253 00168$:
+                                    254 ; genIfx
+      00007C 0D 06            [ 1]  255 	tnz	(0x06, sp)
+      00007E 26 03            [ 1]  256 	jrne	00169$
+      000080 CCr00rE9         [ 2]  257 	jp	00110$
+      000083                        258 00169$:
+                                    259 ;	./src/main.c: 30: led_out += 1;   // Zvýší proměnnou led_out o 1, což změní stav LED
+                                    260 ; genCast
+                                    261 ; genAssign
+      000083 7B 01            [ 1]  262 	ld	a, (0x01, sp)
+                                    263 ; genPlus
+      000085 4C               [ 1]  264 	inc	a
+      000086 6B 01            [ 1]  265 	ld	(0x01, sp), a
+                                    266 ;	./src/main.c: 31: time = milis(); // aktuální čas pro další kontrolu intervalu 200 ms
+                                    267 ; genCall
+      000088 CDr00r00         [ 4]  268 	call	_milis
+      00008B 1F 04            [ 2]  269 	ldw	(0x04, sp), x
+      00008D 17 02            [ 2]  270 	ldw	(0x02, sp), y
+                                    271 ;	./src/main.c: 34: if (led_out > 3) {
+                                    272 ; genCmp
+                                    273 ; genCmpTnz
+      00008F 7B 01            [ 1]  274 	ld	a, (0x01, sp)
+      000091 A1 03            [ 1]  275 	cp	a, #0x03
+      000093 22 03            [ 1]  276 	jrugt	00170$
+      000095 CCr00r9C         [ 2]  277 	jp	00102$
+      000098                        278 00170$:
+                                    279 ; skipping generated iCode
+                                    280 ;	./src/main.c: 35: led_out = 1;
+                                    281 ; genAssign
+      000098 A6 01            [ 1]  282 	ld	a, #0x01
+      00009A 6B 01            [ 1]  283 	ld	(0x01, sp), a
+                                    284 ; genLabel
+      00009C                        285 00102$:
+                                    286 ;	./src/main.c: 39: if (led_out == 1) {
+                                    287 ; genCmpEQorNE
+      00009C 7B 01            [ 1]  288 	ld	a, (0x01, sp)
+      00009E 4A               [ 1]  289 	dec	a
+      00009F 26 03            [ 1]  290 	jrne	00172$
+      0000A1 CCr00rA7         [ 2]  291 	jp	00173$
+      0000A4                        292 00172$:
+      0000A4 CCr00rBA         [ 2]  293 	jp	00107$
+      0000A7                        294 00173$:
+                                    295 ; skipping generated iCode
+                                    296 ;	./src/main.c: 40: GPIO_WriteHigh(GPIOB, GPIO_PIN_0); // Zapne LED na pinu PB.0
+                                    297 ; genSend
+      0000A7 A6 01            [ 1]  298 	ld	a, #0x01
+                                    299 ; genSend
+      0000A9 AE 50 05         [ 2]  300 	ldw	x, #0x5005
+                                    301 ; genCall
+      0000AC CDr00r00         [ 4]  302 	call	_GPIO_WriteHigh
+                                    303 ;	./src/main.c: 41: GPIO_WriteLow(GPIOB, GPIO_PIN_2);  // Vypne LED na pinu PB.2
+                                    304 ; genSend
+      0000AF A6 04            [ 1]  305 	ld	a, #0x04
+                                    306 ; genSend
+      0000B1 AE 50 05         [ 2]  307 	ldw	x, #0x5005
+                                    308 ; genCall
+      0000B4 CDr00r00         [ 4]  309 	call	_GPIO_WriteLow
+                                    310 ; genGoto
+      0000B7 CCr00rE9         [ 2]  311 	jp	00110$
+                                    312 ; genLabel
+      0000BA                        313 00107$:
+                                    314 ;	./src/main.c: 42: } else if (led_out == 2) {
+                                    315 ; genCmpEQorNE
+      0000BA 7B 01            [ 1]  316 	ld	a, (0x01, sp)
+      0000BC A1 02            [ 1]  317 	cp	a, #0x02
+      0000BE 26 03            [ 1]  318 	jrne	00175$
+      0000C0 CCr00rC6         [ 2]  319 	jp	00176$
+      0000C3                        320 00175$:
+      0000C3 CCr00rD9         [ 2]  321 	jp	00104$
+      0000C6                        322 00176$:
+                                    323 ; skipping generated iCode
+                                    324 ;	./src/main.c: 43: GPIO_WriteHigh(GPIOB, GPIO_PIN_1); // Zapne LED na pinu PB.1
+                                    325 ; genSend
+      0000C6 A6 02            [ 1]  326 	ld	a, #0x02
+                                    327 ; genSend
+      0000C8 AE 50 05         [ 2]  328 	ldw	x, #0x5005
+                                    329 ; genCall
+      0000CB CDr00r00         [ 4]  330 	call	_GPIO_WriteHigh
+                                    331 ;	./src/main.c: 44: GPIO_WriteLow(GPIOB, GPIO_PIN_0);  // Vypne LED na pinu PB.0
+                                    332 ; genSend
+      0000CE A6 01            [ 1]  333 	ld	a, #0x01
+                                    334 ; genSend
+      0000D0 AE 50 05         [ 2]  335 	ldw	x, #0x5005
+                                    336 ; genCall
+      0000D3 CDr00r00         [ 4]  337 	call	_GPIO_WriteLow
+                                    338 ; genGoto
+      0000D6 CCr00rE9         [ 2]  339 	jp	00110$
+                                    340 ; genLabel
+      0000D9                        341 00104$:
+                                    342 ;	./src/main.c: 46: GPIO_WriteHigh(GPIOB, GPIO_PIN_2); // Zapne LED na pinu PB.2
+                                    343 ; genSend
+      0000D9 A6 04            [ 1]  344 	ld	a, #0x04
+                                    345 ; genSend
+      0000DB AE 50 05         [ 2]  346 	ldw	x, #0x5005
+                                    347 ; genCall
+      0000DE CDr00r00         [ 4]  348 	call	_GPIO_WriteHigh
+                                    349 ;	./src/main.c: 47: GPIO_WriteLow(GPIOB, GPIO_PIN_1);  // Vypne LED na pinu PB.1
+                                    350 ; genSend
+      0000E1 A6 02            [ 1]  351 	ld	a, #0x02
+                                    352 ; genSend
+      0000E3 AE 50 05         [ 2]  353 	ldw	x, #0x5005
+                                    354 ; genCall
+      0000E6 CDr00r00         [ 4]  355 	call	_GPIO_WriteLow
+                                    356 ; genLabel
+      0000E9                        357 00110$:
+                                    358 ;	./src/main.c: 51: lasttlac = tlac; // Uloží aktuální stav tlačítka do `lasttlac` pro příští iteraci.
+                                    359 ; genAssign
+      0000E9 7B 07            [ 1]  360 	ld	a, (0x07, sp)
+      0000EB 6B 06            [ 1]  361 	ld	(0x06, sp), a
+                                    362 ; genGoto
+      0000ED CCr00r48         [ 2]  363 	jp	00114$
+                                    364 ; genLabel
+      0000F0                        365 00116$:
+                                    366 ;	./src/main.c: 53: }
+                                    367 ; genEndFunction
+      0000F0 5B 0B            [ 2]  368 	addw	sp, #11
+      0000F2 81               [ 4]  369 	ret
+                                    370 	.area CODE
+                                    371 	.area CONST
+                                    372 	.area INITIALIZER
+                                    373 	.area CABS (ABS)
